@@ -1,5 +1,5 @@
 import requests
-from classes.abc_class import Engine
+from site_classes.abc_class import Engine
 from src.text_changing import text_change
 
 
