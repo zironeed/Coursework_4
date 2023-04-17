@@ -8,11 +8,11 @@ class Vacancy:
         self.__responsibility = info["responsibility"]
         self.__requirement = info["requirement"]
         self.__salary_from = info["salary_from"]
-        self.__salary_to = info["salart_to"]
+        self.__salary_to = info["salary_to"]
 
     @property
     def name(self) -> str:
-        """Вывод значения __name"""
+        """Вывод значения name"""
         return self.__name
 
     @property
@@ -46,7 +46,7 @@ class Vacancy:
         return self.__salary_from
 
     @property
-    def salary_toe(self) -> str:
+    def salary_to(self) -> str:
         """Вывод значения salary_to"""
         return self.__salary_to
 

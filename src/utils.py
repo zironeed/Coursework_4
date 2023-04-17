@@ -124,3 +124,10 @@ def deep_search_sj_vacancies(vacancies: list, user_value: str, user_key: str) ->
                 vacancy_instance = SJVacancy(vacancy)
                 if user_value in str(vacancy_instance.requirement):
                     print(vacancy_instance)
+
+
+def print_info(*data):
+    """Вывод данных"""
+    for description in data:
+        print(description)
+    print('')

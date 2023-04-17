@@ -7,17 +7,20 @@ class HeadHunter(Engine):
     """Класс сайта hh.ru"""
     def __init__(self) -> None:
         self.__vacancies = []
-        self.__api = 'https://api.hh.ru/'
+        self.__api = 'https://api.hh.ru/vacancies'
+        self.__config = [{"last request": "Последний запрос был к hh.ru"}]
 
     @property
     def vacancies(self):
         """Вывод вакансий"""
         return self.__vacancies
 
+    @property
+    def config(self):
+        return self.__config
+
     def get_request(self, vacancy: str) -> None or str:
-        """
-        Запрос к hh.ru
-        """
+        """Запрос к hh.ru"""
         print("hh.ru")
 
         page_number = 0
@@ -25,9 +28,11 @@ class HeadHunter(Engine):
 
         while page_number < last_page:
 
-            response = requests.get(self.__api, params={'text': vacancy,
-                                                    'per_page': 100,
-                                                    'page': page_number})
+            params = {'text': vacancy,
+                      'per_page': 100,
+                      'page': page_number}
+
+            response = requests.get(self.__api, params=params)
 
             if response != 200:
                 return "Ошибка:", response.status_code
@@ -48,14 +53,14 @@ class HeadHunter(Engine):
                         salary_from = 0
                         salary_to = 0
 
-                    self.__vacancies.append({"name": text_change((vacancy["name"])),
-                                             "url": text_change((vacancy["url"])),
+                    self.__vacancies.append({"name": text_change(vacancy["name"]),
+                                             "url": text_change(vacancy["url"]),
                                              "responsibility": text_change(vacancy["snippet"]["responsibility"]),
-                                             "town": text_change((vacancy["area"]["name"])),
-                                             "employer": text_change((vacancy["employer"]["name"])),
+                                             "town": text_change(vacancy["area"]["name"]),
+                                             "employer": text_change(vacancy["employer"]["name"]),
                                              "requirement": text_change(vacancy["snippet"]["requirement"]),
-                                             "salary_from": text_change((str(salary_from))),
-                                             "salary_to": text_change((str(salary_to))),
+                                             "salary_from": text_change(str(salary_from)),
+                                             "salary_to": text_change(str(salary_to)),
                                              })
 
             page_number += 1
@@ -63,24 +68,28 @@ class HeadHunter(Engine):
 
 class SuperJob(Engine):
     """Класс сайта superjob.ru"""
-    def __init__(self):
+    def __init__(self, api_key: str) -> None:
         self.__vacancies = []
-        self.__api = "v3.r.137494512.c0bfbe9460bf69a9f1737c09e672ee1300ef0865.e3c764694d2428df6ccc1719788c0cc1f7cad2d8"
+        self.__api = api_key
+        self.__config = [{"last request": "Последний запрос был к superjob.ru"}]
 
     @property
     def vacancies(self):
         return self.__vacancies
 
+    @property
+    def config(self):
+        return self.__config
+
     def get_request(self, vacancy: str) -> None or str:
-        """Запрос к superjob.ru
-        """
+        """Запрос к superjob.ru"""
         print('superjob.ru')
 
-        superjob_url = "https://api.superjob.ru/:2.0/vacancies"
-        page_number = 0
-        last_page = 5
+        superjob_url = "https://api.superjob.ru/2.0/vacancies/"
+        page_number = 1
+        response_page = True
 
-        while page_number < last_page:
+        while response_page:
 
             response = requests.get(superjob_url,headers={'X-Api-App-Id': self.__api}, params={'text': vacancy,
                                                         'per_page': 100,
@@ -104,4 +113,5 @@ class SuperJob(Engine):
                                              "salary_to": text_change(vacancy["payment_to"]),
                                              })
 
-                    page_number += 1
+            response_page = response.json()["more"]
+            page_number += 1
