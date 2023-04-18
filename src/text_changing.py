@@ -1,22 +1,19 @@
-def text_change(text: str) -> str:
+def format_text(text: str) -> str:
     """
-    Удаление лишних символов
-    :param text: Текст для форматирования
-    :return: Отфармотированный текст
+    Удаление ненужных букв в полях
+    :param text: Строка для форматирования
+    :return: Отформатированная строка
     """
     patterns = {
         1: ['<highlighttext>', ''],
         2: ['</highlighttext>', '']
     }
 
-    if text is None:
-        return f"Нет данных"
-    elif text == "null":
-        return f"Нет данных"
+    if text == "null":
+        return f"Данных нет"
+    elif text is None:
+        return f"Данных нет"
     else:
         for i in patterns:
             text = text.replace(patterns[i][0], patterns[i][1])
-
-        return text.lower()
-
-print(text_change("asdfjsldfjdlverjglkajlvfLKJGLSKDJFLSDKv"))
+        return text

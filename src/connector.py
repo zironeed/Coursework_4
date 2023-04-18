@@ -3,99 +3,96 @@ import os
 
 
 class Connector:
-    """Класс-коннектор к файлу"""
-    def __init__(self, file_name: str) -> None:
-        self.__file_data = file_name
-        self.__file_path = None
+    """ Класс коннектор к файлу """
+    __slots__ = ["__data_file", "__path_file"]
+
+    def __init__(self, name_file: str) -> None:
+        self.__data_file = name_file
+        self.__path_file = None
+        self.data_file = name_file
 
     @property
-    def file_data(self):
-        return self.__file_data
+    def data_file(self) -> str:
+        return self.__data_file
 
-    @file_data.setter
-    def file_data(self, value: str) -> None:
-        self.__file_data = value
-        print("Успешно")
-        self.try_connect()
+    @data_file.setter
+    def data_file(self, value: str) -> None:
+        self.__data_file = value
+        self.__connect()
 
-    def try_connect(self) -> None:
-        """Проверка доступности файла"""
-        self.__file_path = os.path.join(os.getcwd(), 'data', self.__file_data)
-
-        if os.path.isfile(self.__file_path) is False:
-            file = open(self.__file_path, 'w+', encoding='UTF-8')
-            file.close()
-            print('Файл для хранения данных создан')
+    def __connect(self) -> None:
+        """ Проверка на существование файла с данными и создание его при необходимости """
+        # Создает файл, если его не существует
+        self.__path_file = os.path.join(os.getcwd(), "data", self.__data_file)
+        check_file = os.path.isfile(self.__path_file)
+        if check_file is False:
+            my_file = open(self.__path_file, "w+", encoding="utf8")
+            my_file.close()
+            print(f"Файл {self.__data_file} для хранения данных создан.\n")
 
     def insert(self, data: list) -> None:
-        """Запись данных в файл"""
-        json_file = json.dumps(data, indent=4, ensure_ascii=False)
+        """ Запись данных в файл с сохранением структуры и исходных данных """
+        json_object = json.dumps(data, indent=4, ensure_ascii=False)
+        with open(self.__path_file, "w", encoding='utf-8') as write_file:
+            write_file.write(json_object)
 
-        with open(self.__file_path, 'w', encoding='UTF-8') as file:
-            file.write(json_file)
-
-    def select(self, request: dict) -> list or str:
-        """Выбор данных из файла по запросу"""
-        sort_data = []
-
-        with open(self.__file_path, 'r', encoding='UTF-8') as file:
-            data = json.load(file)
-
-        if request == {'*': '*'}:
-            for cell in data:
-                sort_data.append(cell)
-
+    def select(self, query: dict) -> list or str:
+        """ Выбор данных из файла, искомое значение это словарь, например: {'town': Москва} """
+        data_filter = []
+        with open(self.__path_file, "r", encoding='utf-8') as read_file:
+            datas = json.load(read_file)
+        # Поиск всех данных в списке словарей
+        if query == {"*": "*"}:
+            for data in datas:
+                data_filter.append(data)
+        # Поиск данных в списке словарей по ключу
         else:
-            for cell in data:
-                search_key = cell.get(*request, None)
+            for data in datas:
+                search_key = data.get(*query, None)
                 if search_key is not None:
-                    if search_key == list(request.values())[0]:
-                        sort_data.append(data)
+                    if search_key == list(query.values())[0]:
+                        data_filter.append(data)
+        return data_filter
 
-        return sort_data
+    def delete(self, query: dict) -> int:
+        """ Удаление записей из файла по ключу, например {'town': Москва} """
+        # Список, который не попадает под условия фильтрации, его будем сохранять
+        data_not_delete = []
+        with open(self.__path_file, "r", encoding='utf-8') as read_file:
+            datas = json.load(read_file)
+        deleted_counts = 0
 
-    def delete(self, request: dict) -> int:
-        """Удаление указанных данных из файла"""
-        required_data = []
-        deleted_data_count = 0
-
-        with open(self.__file_path, 'r', encoding='UTF-8') as file:
-            data = json.load(file)
-
-        for cell in data:
-            search_key = cell.get(*request, None)
-
+        # Поиск данных в списке словарей по ключу и удаление
+        for data in datas:
+            search_key = data.get(*query, None)
             if search_key is not None:
-                if search_key == list(request.values())[0]:
-                    deleted_data_count += 1
-
+                if search_key != list(query.values())[0]:
+                    data_not_delete.append(data)
                 else:
-                    required_data.append(cell)
+                    deleted_counts += 1
 
-        json_file = json.dumps(required_data, indent=4, ensure_ascii=False)
-        with open(self.__file_path, 'w', encoding='UTF-8') as file:
-            file.write(json_file)
+        json_object = json.dumps(data_not_delete, indent=4, ensure_ascii=False)
+        with open(self.__path_file, "w", encoding='utf-8') as write_file:
+            write_file.write(json_object)
 
-        return deleted_data_count
+        return deleted_counts
 
     def validate(self):
-        """Обработка файла для хранения"""
+        """"Валидация файла для хранения """
         try:
-            with open(self.__file_path, encoding='UTF-8') as file:
-                json.load(file)
+            with open(self.__path_file, "r", encoding='utf-8') as read_file:
+                json.load(read_file)
         except ValueError:
-            print("Неверный формат файла")
+            print("! Файл для обработки неверного формата, либо пустой !\n")
             return False
-        else:
-            return True
+        return True
 
-    def data_sort(self, sort_key: str) -> list or str:
-        """Сортировка данных"""
-        with open(self.__file_path, 'r', encoding='UTF-8') as file:
-            data = json.load(file)
+    def sort_all(self, key: str) -> list or str:
+        """ Сортировка данных файла по ключу """
+        with open(self.__path_file, "r", encoding='utf-8') as read_file:
+            datas = json.load(read_file)
+        new_list = sorted(datas, key=lambda sorting: sorting[key])
 
-        sort_list = sorted(data, key=lambda sorting: sorting[sort_key])
-
-        json_file = json.dumps(sort_list)
-        with open(self.__file_path, 'w', encoding='UTF-8') as file:
-            file.write(json_file)
+        json_object = json.dumps(new_list, indent=4, ensure_ascii=False)
+        with open(self.__path_file, "w", encoding='utf-8') as write_file:
+            write_file.write(json_object)
